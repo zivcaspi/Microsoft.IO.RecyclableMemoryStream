@@ -305,6 +305,27 @@ namespace Microsoft.IO
         public bool ThrowExceptionOnToArray { get; set; }
 
         /// <summary>
+        /// Trims large pools by removing half of the buffers they own.
+        /// This can be used periodically to slowly "deflate" the memory
+        /// held by this class following a temporary memory allocation storm
+        /// that has since subsided.
+        /// </summary>
+        public void TrimLargePool()
+        {
+            foreach (var largePool in this.largePools)
+            {
+                var count = largePool.Count;
+                if (count > 8)
+                {
+                    for (int i = 0; i < count / 2; i++)
+                    {
+                        largePool.TryPop(out var dummy);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Removes and returns a single block from the pool.
         /// </summary>
         /// <returns>A byte[] array</returns>
